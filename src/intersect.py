@@ -17,7 +17,7 @@
 # See documentation for environment.yml file and links to installation documentation for dependencies
 
 # Inputs: Files containing summary statistics and references for intersection testing.
-#         - [GWAS]: GWAS summary statistics file which contains information on the chromosome, position, and p-value for each SNP
+#         - [GWAS]: summary statistics file which contains information on the chromosome, position, and p-value for each SNP for GWAS, gene_ids for RVAS
 #         - [EOI].bed: BED file with elements of interest (EOIs)
 #         - [REF].bed: BED file with gene annotation of human genome reference (e.g. UCSC's hg19 .bed)
 
@@ -424,12 +424,17 @@ def biomart_locate(annotation_out, argumentClass, settingsClass):
         feature_col = "FEATURE"
         biomart_header = ["CHR","START","END","FEATURE_TYPE","FEATURE_ID"]
     else:
-        feature_col = "NEAREST"
+        #Use gene_id column in RVAS summary stats
+        if settingsClass.use_rvas_genes == True:
+            feature_col = "gene_id"
+        else:
+            feature_col = "NEAREST"
         biomart_header = ["ENSEMBL_ID","START","END","CHR","GENE_NAME","STRAND"]
         if settingsClass.species == "homo_sapiens":
             biomart_header.append("HGNC_SYMBOL")
 
-    # Grab the location (CHR, POS) of the genes identified through vep_annotate()
+    # Grab the location (CHR, POS) of the genes identified through vep_annotate() if using GWAS
+    # Or grab ENSEMBL_IDs if using RVAS 
     annotation_ids = pd.read_csv(annotation_out, sep="\t", header=0, usecols=[feature_col])
     biomart_out = f"{argumentClass.output}.biomart"
     biomart_df = pd.DataFrame(columns=biomart_header)
@@ -640,10 +645,12 @@ def intersect(argumentClass, fileB, eBP):
 ###############################################################################
 def main(**kwargs):
     # Declare settings and parameters coming from options/arguments to hare.py
-    hareSettings = hareclasses.SettingsContainer(kwargs["use_z"], kwargs["anno_only"],
+    hareSettings = hareclasses.SettingsContainer(kwargs["use_rvas_genes"], kwargs["use_z"], kwargs["anno_only"],
     kwargs["source_neale"], kwargs["source_bolt"], kwargs["keep_tmp"], kwargs["species"],
     kwargs["vertebrate"], kwargs["plant"], kwargs["metazoa"], kwargs["fungi"]) #, kwargs["bacteria", kwargs["protsist"])
 
+    print(vars(hareSettings))
+    
     hareParameters = hareclasses.ArgumentContainer(kwargs["gwas"], kwargs["pval"], kwargs["gwas_p"],
     kwargs["maf"], kwargs["gwas_maf"], kwargs["gwas_ref"], kwargs["gwas_alt"],
     kwargs["snp_map"], kwargs["out"], kwargs["cache_dir"], kwargs["cache_version"], kwargs["biotypes"],
@@ -657,7 +664,9 @@ def main(**kwargs):
     print(" ----------------------------------------------------------------------\n")
 
     print(f"-----Workflow started at {datetime.now()}.\n")
-    print(f"[args] GWAS summary statistics file: \'{hareParameters.gwas}\'")
+    if hareSettings.use_rvas_genes == True:
+        print(f"[args] Using RVAS summary statistics to map directly to genes.")
+    print(f"[args]s summary statistics file: \'{hareParameters.gwas}\'")
     if hareSettings.source_neale == True:
         print(f"[args] Using Neale Lab summary statistics format.")
     elif hareSettings.source_bolt == True:
@@ -696,12 +705,27 @@ def main(**kwargs):
     print(f"[args] Results will be written to {hareParameters.output}.*")
 
     # Check that all the files and directories exist
-    for f in [hareParameters.gwas, hareParameters.snp_map, hareParameters.cache_dir, hareParameters.eoi, hareParameters.ref]:
+    files_to_check = [
+        hareParameters.gwas,
+        hareParameters.snp_map,
+        hareParameters.eoi,
+        hareParameters.ref
+        ]
+
+    if not hareSettings.use_rvas_genes:
+        files_to_check.append(hareParameters.cache_dir)
+
+    for f in files_to_check:
         findFiles(f)
 
     # Run annotation and feature finding
-    snps_filepath = gwas_import(hareParameters, hareSettings)
-    annotation_filepath = vep_annotate(snps_filepath, hareParameters, hareSettings)
+    if hareSettings.use_rvas_genes == False:
+        snps_filepath = gwas_import(hareParameters, hareSettings)
+        annotation_filepath = vep_annotate(snps_filepath, hareParameters, hareSettings)
+    else:
+        #Use summary stats from RVAS as annotation, we will use gene_id column to read in ensembl IDs
+        annotation_filepath = hareParameters.gwas 
+
     locations_filepath = biomart_locate(annotation_filepath, hareParameters, hareSettings)
     if hareSettings.anno_only == True:
         print(f"\nWorkflow completed at {datetime.now()}.-----\U0001F407\n")

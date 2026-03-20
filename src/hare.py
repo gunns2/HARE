@@ -55,7 +55,8 @@ def main():
     prerank = subparsers.add_parser('prerank', help="Annotate and rank genes for input into enrichment tools such as GSEA and WebGestalt.")
 
     ########################## INTERSECT ARGUMENTS ##########################
-    intersect.add_argument('--gwas', '-g', type=str, help="Complete filepath for GWAS summary statistics.", required=True)
+    intersect.add_argument('--use_rvas_genes', action="store_true", help="Use RVAS instead of GWAS, skipping annotation step and using genes with biomart directly.", required=False) 
+    intersect.add_argument('--gwas', '-g', type=str, help="Complete filepath for summary statistics.")
     intersect.add_argument('--eoi', '-e', type=str, help="List of elements of interest (EOIs) in BED format.", required=True, default=None)
     intersect.add_argument('--ref', '-r', type=str, help="Genome reference in BED format. Used to generate random regions for background distribution.", required=True)
     intersect.add_argument('--ref_build', '-b', type=str, help="GRCh reference build (only required for human data). Options are either 37 (hg19) or 38 (hg38). Default is 37.", required=False, default="37")
@@ -115,10 +116,11 @@ def main():
     command = args.command
 
     if command == "intersect":
-        tools = ["vep", "bedtools"]
-        for t in tools:
-            check_installs(t)
         intargs = vars(intersect.parse_known_args()[0])
+        #We only need VEP for annotating GWAS variants
+        if not intargs["use_rvas_genes"]:
+           check_installs("vep")
+        check_installs("bedtools") 
         run_intersect(intargs)
 
     elif command == "sigtest":

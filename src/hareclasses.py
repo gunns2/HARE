@@ -3,7 +3,8 @@ import os
 import ntpath
 
 class SettingsContainer:
-    def __init__(self, use_z, anno_only, source_neale, source_bolt, keep_tmp, species, vertebrate, plant, metazoa, fungi): #, bacteria, protist):
+    def __init__(self, use_rvas_genes, use_z, anno_only, source_neale, source_bolt, keep_tmp, species, vertebrate, plant, metazoa, fungi): #, bacteria, protist):
+        self.use_rvas_genes = use_rvas_genes 
         self.use_z = use_z
         self.anno_only = anno_only
         self.source_neale = source_neale
