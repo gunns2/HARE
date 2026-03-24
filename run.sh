@@ -1,0 +1,1 @@
+hare intersect --gwas ../eduYears/data/2026-02-18_fdr_stouffer_5pop_meta.tsv  --eoi reference_assets/harsRichard2020.GRCh37.bed --ref reference_assets/human.hg19.genome_nochr --ref_build 37 --use_rvas_genes --keep_tmp

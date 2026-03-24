@@ -74,6 +74,7 @@ def main():
     intersect.add_argument('--cache_dir', type=str, help="Specify the VEP cache directory to use. Default is \"$HOME/.vep/\"", required=False, default="$HOME/.vep/")
     intersect.add_argument('--cache_version', type=str, help="Specify the VEP cache version to use. Default is 105. It is recommended by Ensembl that you use the same cache and VEP version.", required=False, default="105")
     intersect.add_argument('--dist', '-d', type=int, help="(bp) Distance to transcript for which VEP assigns upstream and downstream consequences. Default is 5000 bp.", required=False, default=5000)
+    intersect.add_argument('--gene_dist', type=int, help="(kbp) Distance in kbp about gene regions for which to expand gene bed file for intersect. Default is 0", required=False, default=0) 
     intersect.add_argument('--biotypes', type=str, help="Allowed biotypes. Options are \"protein_coding\", \"protein_all\", and \"all\". Default is \"protein_all.\" \"all\" will keep all elements regardless of biotype. See VEP's biotype documentation for type details.", required=False, default="protein_all")
     intersect.add_argument('--anno_only', action="store_true", help="Perform only annotation and location finding of genome-wide significant positions (do not simulate and intersect).", required=False)
     intersect.add_argument('--species', type=str, help="Default is \"homo_sapiens\". Latin name of the species for your data e.g. \"arabidopsis_thaliana\". If not human, pair with a sister flag (below, e.g. --plant, --metazoa). This is required in order to find the correct VEP cache and Ensembl site.", required=False, default="homo_sapiens")
@@ -117,6 +118,7 @@ def main():
 
     if command == "intersect":
         intargs = vars(intersect.parse_known_args()[0])
+        print(vars(intersect.parse_known_args()[0])) 
         #We only need VEP for annotating GWAS variants
         if not intargs["use_rvas_genes"]:
            check_installs("vep")

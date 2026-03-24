@@ -513,7 +513,9 @@ def biomart_locate(annotation_out, argumentClass, settingsClass):
     locations_df = pd.DataFrame({})
     if argumentClass.build == "38":
         biomart_df["CHR"] = "chr" + biomart_df["CHR"].astype(str)
-    locations_df[1], locations_df[2], locations_df[3] = biomart_df["CHR"], biomart_df["START"], biomart_df["END"]
+    locations_df[1] = biomart_df["CHR"]
+    locations_df[2] = biomart_df["START"] - int(argumentClass.gene_dist)*1000
+    locations_df[3] = biomart_df["END"] + int(argumentClass.gene_dist)*1000
     locations_df.to_csv(locations_out, sep="\t", header=False, index=False)
     print("OK")
     return locations_out
@@ -616,7 +618,7 @@ def intersect(argumentClass, fileB, eBP):
     Find intersections between element set and elements of interest.
     Our enrichment analysis uses the statistic of intersections per base pair.
     '''
-
+    #for each entry in summary stat file, report the number of hits in the EOI regions
     intersect_outPath = f"{argumentClass.output}.intersect.tmp"
     cmd_int = ["bedtools","intersect","-c","-a",str(fileB),"-b",str(argumentClass.eoi)]
     with open(intersect_outPath, "w") as outfile:
@@ -650,11 +652,13 @@ def main(**kwargs):
     kwargs["vertebrate"], kwargs["plant"], kwargs["metazoa"], kwargs["fungi"]) #, kwargs["bacteria", kwargs["protsist"])
 
     print(vars(hareSettings))
-    
+
     hareParameters = hareclasses.ArgumentContainer(kwargs["gwas"], kwargs["pval"], kwargs["gwas_p"],
     kwargs["maf"], kwargs["gwas_maf"], kwargs["gwas_ref"], kwargs["gwas_alt"],
     kwargs["snp_map"], kwargs["out"], kwargs["cache_dir"], kwargs["cache_version"], kwargs["biotypes"],
-    kwargs["dist"], kwargs["eoi"], kwargs["ref"], kwargs["ref_build"], kwargs["draws"], hareSettings)
+    kwargs["gene_dist"], kwargs["dist"], kwargs["eoi"], kwargs["ref"], kwargs["ref_build"], kwargs["draws"], hareSettings)
+
+    print(vars(hareParameters))
 
     print("\n ----------------------------------------------------------------------")
     print("|                                                                      |")
@@ -693,6 +697,7 @@ def main(**kwargs):
     print(f"[args] Minor allele frequency (MAF) threshold: {hareParameters.maf}")
     print(f"[args] VEP cache directory: \'{hareParameters.cache_dir}\', version {hareParameters.cache_v}")
     print(f"[args] Annotation max distance: {hareParameters.dist}")
+    print(f"[args] Gene max distance: {hareParameters.gene_dist}")
     print(f"[args] Biotypes included in analysis: {hareParameters.biotypes}")
     print(f"[args] Reference genome annotation file: \'{hareParameters.ref}\'")
     if hareSettings.species == "homo_sapiens":

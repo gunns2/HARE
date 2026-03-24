@@ -29,7 +29,7 @@ class SettingsContainer:
 
 # Struct to concisely pass all the arguments/filenames/etc to the functions
 class ArgumentContainer:
-    def __init__(self, gwas, pval, p_col, maf, maf_col, ref_col, alt_col, snp_map, output, cache_dir, cache_version, biotypes, dist, eoi, ref, build, draws, settings):
+    def __init__(self, gwas, pval, p_col, maf, maf_col, ref_col, alt_col, snp_map, output, cache_dir, cache_version, biotypes, dist, gene_dist, eoi, ref, build, draws, settings):
         self.gwas = gwas
         self.pval = pval
         self.p_col = p_col
@@ -60,6 +60,7 @@ class ArgumentContainer:
         self.cache_v = cache_version
         self.biotypes = biotypes
         self.dist = dist
+        self.gene_dist = gene_dist
         self.eoi = eoi
         self.ref = ref
         self.draws = draws
